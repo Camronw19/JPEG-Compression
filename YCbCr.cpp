@@ -75,6 +75,91 @@ void YCbCrImage::output_ycbcr()
 	}
 }
 
+void YCbCrImage::output_luminance()
+{
+
+	std::ofstream Luminance("Luminance.ppm", std::ios::binary | std::ios::out);
+
+	if (Luminance.is_open())
+	{
+		Luminance << "P5" << "\n";
+		Luminance << width << " " << height << '\n';
+		Luminance << std::to_string(max_val) << "\n";
+
+		for (int row = 0; row < height; row++)
+			for (int col = 0; col < width; col++)
+			{
+				Luminance << data[row][col].y;
+			}
+
+		Luminance.close();
+		std::cout << "Image sucessfully created\n";
+	}
+	else
+	{
+		std::cout << "Unable to create output file" << std::endl;
+	}
+
+}
+
+void YCbCrImage::output_RedChrominance()
+{
+
+	std::ofstream RedChrominance("RedChrominance.ppm", std::ios::binary | std::ios::out);
+
+	if (RedChrominance.is_open())
+	{
+		RedChrominance << "P6" << "\n";
+		RedChrominance << width << " " << height << '\n';
+		RedChrominance << std::to_string(max_val) << "\n";
+
+		for (int row = 0; row < height; row++)
+			for (int col = 0; col < width; col++)
+			{
+				RedChrominance << data[row][col].cr;
+				RedChrominance << 0;
+				RedChrominance << 0;
+			}
+
+		RedChrominance.close();
+		std::cout << "Image sucessfully created\n";
+	}
+	else
+	{
+		std::cout << "Unable to create output file" << std::endl;
+	}
+
+}
+
+void YCbCrImage::output_blueChrominance()
+{
+
+	std::ofstream BlueChrominance("BlueChrominance.ppm", std::ios::binary | std::ios::out);
+
+	if (BlueChrominance.is_open())
+	{
+		BlueChrominance << "P6" << "\n";
+		BlueChrominance << width << " " << height << '\n';
+		BlueChrominance << std::to_string(max_val) << "\n";
+
+		for (int row = 0; row < height; row++)
+			for (int col = 0; col < width; col++)
+			{
+				BlueChrominance << 0;
+				BlueChrominance << 0;
+				BlueChrominance << data[row][col].cb;
+			}
+
+		BlueChrominance.close();
+		std::cout << "Image sucessfully created\n";
+	}
+	else
+	{
+		std::cout << "Unable to create output file" << std::endl;
+	}
+
+}
+
 bool YCbCrImage::has_value()
 {
 	if (image_has_value)
@@ -92,4 +177,36 @@ void YCbCrImage::resize_data_array(int old_height, int new_width, int new_height
 	data = new YCbCrPixel * [new_height];
 	for (int row = 0; row < new_height; row++)
 		data[row] = new YCbCrPixel[new_width];
+}
+
+void YCbCrImage::chrominance_downsampling()
+{
+	int newHeight = height / 2;
+	int newWidth = width / 2;
+
+	//Allocate memory for 2d array
+	downsampledData = new downsampledPixel * [newHeight];
+	for (int row = 0; row < newHeight; row++)
+		downsampledData[row] = new downsampledPixel[newWidth];
+
+
+	for (int row = 0; row < newHeight; row++) {
+		for (int col = 0; col < newWidth; col++) {
+
+			unsigned int crSum = 0;
+			unsigned int cbSum = 0;
+
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < 2; j++) {
+
+					crSum += data[2 * row + i][2 * col + j].cr;
+					cbSum += data[2 * row + i][2 * col + j].cb;
+				}
+			}
+
+			downsampledData[row][col].cr = crSum / 4;
+			downsampledData[row][col].cb = cbSum / 4;
+
+		}
+	}
 }

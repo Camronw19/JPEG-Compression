@@ -1,6 +1,12 @@
 #pragma once
 #include <string>
 
+struct downsampledPixel
+{
+	unsigned char cr;
+	unsigned char cb;
+};
+
 struct YCbCrPixel
 {
 	unsigned char y;
@@ -20,6 +26,7 @@ public:
 	bool image_has_value;
 	std::string name;
 	YCbCrPixel** data;
+	downsampledPixel** downsampledData;
 
 	YCbCrImage();
 	YCbCrImage(int height, int width, int max_val, std::string name);
@@ -28,5 +35,9 @@ public:
 
 	void resize_data_array(int old_height, int new_width, int new_height);
 	void output_ycbcr();
+	void output_luminance();
+	void output_RedChrominance();
+	void output_blueChrominance();
 	bool has_value();
+	void chrominance_downsampling();
 };

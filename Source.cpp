@@ -7,19 +7,24 @@ YCbCrImage rgb_to_ycbcr(const PPMImage& rgb_image);
 
 int main()
 {
-	std::string image_path = "kodak06.ppm"; 
-	PPMImage image(image_path); 
-	image.name = "TEST"; 
+	std::string image_path = "kodak06.ppm";
+	PPMImage image(image_path);
+	image.name = "Test.ppm";
+
 
 	if (image.has_value())
 	{
-		std::cout << "Image read successfully"; 
-		YCbCrImage ycbcr_image = rgb_to_ycbcr(image); 
+		std::cout << "Image read successfully";
+		YCbCrImage ycbcr_image = rgb_to_ycbcr(image);
+		ycbcr_image.output_luminance();
+		ycbcr_image.output_ycbcr();
+		ycbcr_image.output_blueChrominance();
+		ycbcr_image.output_RedChrominance();
 	}
 
 
 
-	return 0; 
+	return 0;
 }
 
 YCbCrImage rgb_to_ycbcr(const PPMImage& rgb_image)
@@ -36,20 +41,17 @@ YCbCrImage rgb_to_ycbcr(const PPMImage& rgb_image)
 			double yb = ((25.064 * rgb_image.data[row][col].blue) / 256);
 			ycbcr_image.data[row][col].y = 16 + yr + yg + yb;
 
-			double cbr = ((37.945 * rgb_image.data[row][col].red) / 256); 
-			double cbg = ((74.494 * rgb_image.data[row][col].green) / 256); 
-			double cbb = ((112.439 * rgb_image.data[row][col].blue) / 256); 
+			double cbr = ((37.945 * rgb_image.data[row][col].red) / 256);
+			double cbg = ((74.494 * rgb_image.data[row][col].green) / 256);
+			double cbb = ((112.439 * rgb_image.data[row][col].blue) / 256);
 			ycbcr_image.data[row][col].cb = 128 - cbr - cbg + cbb;
 
-			double crr = ((112.439 * rgb_image.data[row][col].red) / 256); 
-			double crg = ((94.154 * rgb_image.data[row][col].green) / 256); 
-			double crb = ((18.285 * rgb_image.data[row][col].blue)/ 256); 
+			double crr = ((112.439 * rgb_image.data[row][col].red) / 256);
+			double crg = ((94.154 * rgb_image.data[row][col].green) / 256);
+			double crb = ((18.285 * rgb_image.data[row][col].blue) / 256);
 			ycbcr_image.data[row][col].cr = 128 + crr - crg - crb;
 		}
 	}
 
-	return ycbcr_image; 
+	return ycbcr_image;
 }
-
-
-// Hello liam 
