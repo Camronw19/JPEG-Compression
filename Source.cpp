@@ -9,17 +9,25 @@ int main()
 {
 	std::string image_path = "kodak06.ppm";
 	PPMImage image(image_path);
-	image.name = "Test.ppm";
+	image.name = "Kodak06.ppm";
 
 
 	if (image.has_value())
 	{
-		std::cout << "Image read successfully";
+		std::cout << "Image read successfully" << '\n';
 		YCbCrImage ycbcr_image = rgb_to_ycbcr(image);
 		ycbcr_image.output_luminance();
 		ycbcr_image.output_ycbcr();
 		ycbcr_image.output_blueChrominance();
 		ycbcr_image.output_RedChrominance();
+
+		ycbcr_image.chrominance_downsampling();
+	
+
+		ycbcr_image.output_ycbcr();
+		ycbcr_image.output_blueChrominance();
+		ycbcr_image.output_RedChrominance();
+		
 	}
 
 

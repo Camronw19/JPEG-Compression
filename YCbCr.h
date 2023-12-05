@@ -40,4 +40,6 @@ public:
 	void output_blueChrominance();
 	bool has_value();
 	void chrominance_downsampling();
+	void rescale_chrominance_data();
+	
 };

@@ -78,7 +78,7 @@ void YCbCrImage::output_ycbcr()
 void YCbCrImage::output_luminance()
 {
 
-	std::ofstream Luminance("Luminance.ppm", std::ios::binary | std::ios::out);
+	std::ofstream Luminance("Luminance_" + name, std::ios::binary | std::ios::out);
 
 	if (Luminance.is_open())
 	{
@@ -105,7 +105,7 @@ void YCbCrImage::output_luminance()
 void YCbCrImage::output_RedChrominance()
 {
 
-	std::ofstream RedChrominance("RedChrominance.ppm", std::ios::binary | std::ios::out);
+	std::ofstream RedChrominance("RedChrominance_" + name, std::ios::binary | std::ios::out);
 
 	if (RedChrominance.is_open())
 	{
@@ -134,7 +134,7 @@ void YCbCrImage::output_RedChrominance()
 void YCbCrImage::output_blueChrominance()
 {
 
-	std::ofstream BlueChrominance("BlueChrominance.ppm", std::ios::binary | std::ios::out);
+	std::ofstream BlueChrominance("BlueChrominance_" + name, std::ios::binary | std::ios::out);
 
 	if (BlueChrominance.is_open())
 	{
@@ -209,4 +209,26 @@ void YCbCrImage::chrominance_downsampling()
 
 		}
 	}
+
+	std::cout << "Chrominance downsampling complete" << '\n';
+
 }
+
+void YCbCrImage::rescale_chrominance_data()
+{
+
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+
+			int downscaled_i = i / 2;
+			int downscaled_j = j / 2;
+
+			data[i][j].cr = (data[downscaled_i][downscaled_j].cr + data[downscaled_i + 1][downscaled_j].cr + data[downscaled_i][downscaled_j + 1].cr + data[downscaled_i + 1][downscaled_j + 1].cr) / 4;
+			data[i][j].cb = (data[downscaled_i][downscaled_j].cb + data[downscaled_i + 1][downscaled_j].cb + data[downscaled_i][downscaled_j + 1].cb + data[downscaled_i + 1][downscaled_j + 1].cb) / 4;
+		}
+	}
+
+	std::cout << "Chrominance Data rescaled" << '\n';
+	name = "Post_downsampling_" + name;
+}
+
