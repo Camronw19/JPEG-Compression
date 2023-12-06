@@ -29,6 +29,19 @@ public:
 
 };
 
+struct RLE
+{
+public:
+	std::vector<std::pair<int, int>> y;
+	std::vector<std::pair<int, int>> cr;
+	std::vector<std::pair<int, int>> cb;
+
+	RLE(); 
+	void print_y();
+	void print_cr();
+	void print_cb();
+};
+
 
 class JPEGCompressor
 {
@@ -37,6 +50,7 @@ private:
 	// private data members 
 	std::unique_ptr<YCbCrImage> ycbcr; 
 	DCTCoefficients dct_coefficients; 
+	RLE rle_data; 
 
 	const std::array<std::array<int, 8>, 8> luminance_q_matrix = { {
 		{16, 11, 10, 16, 24, 40, 51, 61},
@@ -63,6 +77,8 @@ private:
 	std::array<std::array<int, 8>, 8> compute_dct_matrix(const std::array<std::array<unsigned char, 8>, 8>& input_matrix);
 	void rgb_to_ycbcr(const PPMImage& rgb_image);
 	void dct(DCTMode mode);
+	std::vector<std::pair<int, int>> run_length_encoding(std::vector<std::vector<int>>& data);
+	std::vector<std::pair<int, int>> rle_block(const std::array<std::array<int, 8>, 8>& block);
 
 public: 
 	JPEGCompressor();

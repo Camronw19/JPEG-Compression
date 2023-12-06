@@ -26,8 +26,10 @@ void JPEGCompressor::compress_ppm(const PPMImage& image)
 		dct(DCTMode::Cr);
 		dct(DCTMode::Cb);
 
-		dct_coefficients.print_y(); 
-		
+		// Step 4. Run Length Encoding
+		rle_data.y =  run_length_encoding(dct_coefficients.y);
+		rle_data.cr = run_length_encoding(dct_coefficients.cr);
+		rle_data.cb = run_length_encoding(dct_coefficients.cb); 
 	}
 }
 
@@ -44,6 +46,7 @@ void JPEGCompressor::dct(DCTMode mode)
 		h /= 2; 
 		w /= 2; 
 	}
+
 
 	std::array<std::array<unsigned char, 8>, 8> block;
 	std::array<std::array<int, 8>, 8> dct_block;
@@ -133,6 +136,80 @@ std::array<std::array<int, 8>, 8> JPEGCompressor::compute_dct_matrix(const std::
 	return dct_matrix;
 }
 
+std::vector<std::pair<int, int>> JPEGCompressor::run_length_encoding(std::vector<std::vector<int>> &data)
+{
+	const int block_size = 8; 
+	std::array<std::array<int, 8>, 8> block;
+	std::vector<std::pair<int, int>> encoded_block; 
+	std::vector<std::pair<int, int>> encoded_data; 
+
+	for (int row = 0; row < data.size(); row += block_size)
+	{
+		for (int col = 0; col < data[0].size(); col += block_size)
+		{
+
+			// Read block into array
+			for (int block_row = 0; block_row < 8; block_row++)
+				for (int block_col = 0; block_col < 8; block_col++)
+				{
+					block[block_row][block_col] = data[row + block_row][col + block_col];
+				}
+
+			// encode block
+			encoded_block = rle_block(block); 
+			encoded_data.insert(encoded_data.end(), encoded_block.begin(), encoded_block.end()); 
+			encoded_block.clear(); 
+		}
+	}
+
+	return encoded_data; 
+}
+
+std::vector<std::pair<int, int>> JPEGCompressor::rle_block(const std::array<std::array<int, 8>, 8>& block)
+{
+	std::vector<int> zig_zag_order = { // Zigzag order for traversing the 8x8 block
+	0, 1, 8, 16, 9, 2, 3, 10,
+	17, 24, 32, 25, 18, 11, 4, 5,
+	12, 19, 26, 33, 40, 48, 41, 34,
+	27, 20, 13, 6, 7, 14, 21, 28,
+	35, 42, 49, 56, 57, 50, 43, 36,
+	29, 22, 15, 23, 30, 37, 44, 51,
+	58, 59, 52, 45, 38, 31, 39, 46,
+	53, 60, 61, 54, 47, 55, 62, 63
+	};
+
+	std::array<int, 64> flattened_block; 
+	for (int i = 0; i < 64; ++i)
+	{
+		flattened_block[i] = (block[zig_zag_order[i] / 8][zig_zag_order[i] % 8]);
+	}
+
+	std::vector<std::pair<int, int>> encoded_block; 
+
+	int count = 1;
+	for (size_t i = 1; i < flattened_block.size(); ++i)
+	{
+		if (flattened_block[i] == flattened_block[i - 1])
+		{
+			count++;
+		}
+		else
+		{
+			encoded_block.emplace_back(count, flattened_block[i - 1]);
+			count = 1;
+		}
+	}
+
+	// Adding the last run
+	encoded_block.emplace_back(count, flattened_block[flattened_block.size() - 1]);
+
+	// End of block marker
+	encoded_block.emplace_back(0, 0); 
+
+	return encoded_block; 
+}
+
+
 void JPEGCompressor::rgb_to_ycbcr(const PPMImage& rgb_image)
 {
 
@@ -196,4 +273,30 @@ void DCTCoefficients::print_cr()
 		}
 		std::cout << std::endl;
 	}
+}
+
+RLE::RLE()
+{
+
+}
+
+void print_pairs(std::vector<std::pair<int, int>> &pairs)
+{
+	for (size_t i = 0; i < pairs.size(); i++)
+		std::cout << "(" << pairs[i].first << "," << pairs[i].second << ") ";
+}
+
+void RLE::print_y()
+{
+	print_pairs(y);
+}
+
+void RLE::print_cr()
+{
+	print_pairs(cr);
+}
+
+void RLE::print_cb()
+{
+	print_pairs(cb); 
 }

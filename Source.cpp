@@ -15,7 +15,9 @@ int main()
 	{
 		JPEGCompressor jpeg; 
 		jpeg.compress_ppm(image); 
+
 	}
+
 
 	return 0;
 }
