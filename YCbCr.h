@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <array>
 
 struct downsampledPixel
 {
@@ -41,5 +42,7 @@ public:
 	bool has_value();
 	void chrominance_downsampling();
 	void rescale_chrominance_data();
+	void luminanace_dct(); 
+	std::array<std::array<int, 8>, 8> compute_dct_matrix(const std::array<std::array<unsigned char, 8>, 8>& block);
 	
 };
