@@ -19,9 +19,7 @@ YCbCrPixel::YCbCrPixel(unsigned char y, unsigned char cr, unsigned char cb) :y(y
 YCbCrImage::YCbCrImage()
 	:height(0), width(0), max_val(0), name(""), image_has_value(false)
 {
-	data = new YCbCrPixel * [height];
-	for (int row = 0; row < height; row++)
-		data[row] = new YCbCrPixel[width];
+	data = nullptr; 
 }
 
 
@@ -234,101 +232,5 @@ void YCbCrImage::rescale_chrominance_data()
 	std::cout << "Chrominance Data rescaled" << '\n';
 	name = "Post_downsampling_" + name;
 }
+		
 
-
-void YCbCrImage::luminanace_dct()
-{
-	// *optimize by using pointer arithmitic* // 
-
-	// create dct matrix and resize to image dimensions
-	std::vector<std::vector<int>> dct_matrix;
-	dct_matrix.reserve(height); 
-	for (int row = 0; row < height; row++)
-	{
-		dct_matrix.emplace_back(); 
-		dct_matrix.back().reserve(width);
-	}
-
-	std::array<std::array<unsigned char, 8>, 8> block;
-	std::array<std::array<int, 8>, 8> dct_block;
-
-	int block_size = 8; 
-	int value_shift = 128; 
-
-	// Iterate through the start index of each block [row, col]
-	for (int row = 0; row < height; row += block_size)
-	{
-		for (int col = 0; col < width; col += block_size)
-		{
-
-			// Read block into array
-			for (int block_row = 0; block_row < 8; block_row++)
-				for (int block_col = 0; block_col < 8; block_col++)
-					block[block_row][block_col] = data[row + block_row][col + block_col].y - value_shift;
-
-			// send block to dct 
-			dct_block = compute_dct_matrix(block); 
-
-			// copy dct block into full matrix
-			for (int r = 0; r < dct_block.size(); r++)
-				for (int c = 0; c < dct_block[0].size(); c++)
-					dct_matrix[row + r][col + c] = dct_block[r][c]; 
-
-		}
-	}
-}			
-
-std::array<std::array<int, 8>, 8> YCbCrImage::compute_dct_matrix(const std::array<std::array<unsigned char, 8>, 8>& input_matrix)
-{
-	std::array<std::array<int, 8>, 8> dct_matrix;
-
-	constexpr double pi = 3.14159265358979323846;
-	const int height = 8; 
-	const int width = 8;
-
-	float ci, cj, dct1, sum; 
-
-	for (int i = 0; i < height; i++)
-	{
-		for (int j = 0; j < width; j++)
-		{
-			// ci and cj depends on frequency as well as
-			// number of row and columns of specified matrix
-
-			if (i == 0)
-				ci = 1 / sqrt(height);
-			else
-				ci = sqrt(2) / sqrt(height);
-			if (j == 0)
-				cj = 1 / sqrt(width);
-			else
-				cj = sqrt(2) / sqrt(width);
-
-			// sum will temporarily store the sum of cosine signals
-			sum = 0;
-			for (int k = 0; k < height; k++)
-			{
-				for (int l = 0; l < width; l++)
-				{
-					dct1 = input_matrix[k][l] *
-						cos((2 * k + 1) * i * pi / (2 * height)) *
-						cos((2 * l + 1) * j * pi / (2 * width));
-					sum = sum + dct1;
-				}
-			}
-			dct_matrix[i][j] = ci * cj * sum;
-		}
-	}
-
-
-	for (int i = 0; i < dct_matrix.size(); i++)
-	{
-		for (int j = 0; j < dct_matrix[0].size(); j++)
-		{
-			std::cout << dct_matrix[i][j] << " "; 
-		}
-		std::cout << std::endl;
-	}
-
-	return dct_matrix; 
-}

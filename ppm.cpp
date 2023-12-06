@@ -145,7 +145,7 @@ void PPMImage::output_ppm()
 	}
 }
 
-bool PPMImage::has_value()
+bool PPMImage::has_value() const
 {
 	if (image_has_value)
 		return true;
