@@ -30,5 +30,5 @@ public:
 	void resize_data_array(int old_height, int new_width, int new_height);
 	void read_ppm(std::string path);
 	void output_ppm();
-	bool has_value();
+	bool has_value() const;
 };
