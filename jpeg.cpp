@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <array>
+#include <map>
+#include <queue>
 
 JPEGCompressor::JPEGCompressor()
 {
@@ -30,6 +32,12 @@ void JPEGCompressor::compress_ppm(const PPMImage& image)
 		rle_data.y =  run_length_encoding(dct_coefficients.y);
 		rle_data.cr = run_length_encoding(dct_coefficients.cr);
 		rle_data.cb = run_length_encoding(dct_coefficients.cb); 
+
+		// Step 5. Huffman Coding
+		calculate_huffman_freq(); 
+		huffman_frequencies.print_y_freq(); 
+		HuffmanTrees Trees(huffman_frequencies);
+		
 	}
 }
 
@@ -180,9 +188,7 @@ std::vector<std::pair<int, int>> JPEGCompressor::rle_block(const std::array<std:
 
 	std::array<int, 64> flattened_block; 
 	for (int i = 0; i < 64; ++i)
-	{
 		flattened_block[i] = (block[zig_zag_order[i] / 8][zig_zag_order[i] % 8]);
-	}
 
 	std::vector<std::pair<int, int>> encoded_block; 
 
@@ -209,6 +215,17 @@ std::vector<std::pair<int, int>> JPEGCompressor::rle_block(const std::array<std:
 	return encoded_block; 
 }
 
+void JPEGCompressor::calculate_huffman_freq()
+{
+	for (const auto& pair : rle_data.y)
+		huffman_frequencies.y[pair]++; 
+
+	for (const auto& pair : rle_data.cr)
+		huffman_frequencies.cr[pair]++;
+
+	for (const auto& pair : rle_data.cb)
+		huffman_frequencies.cb[pair]++;
+}
 
 void JPEGCompressor::rgb_to_ycbcr(const PPMImage& rgb_image)
 {
@@ -299,4 +316,111 @@ void RLE::print_cr()
 void RLE::print_cb()
 {
 	print_pairs(cb); 
+}
+
+void print_freq_map(std::map<std::pair<int, int>, int>& freq_map)
+{
+	for (const auto& mapping : freq_map)
+		std::cout << "(" << mapping.first.first << "," << mapping.first.second << ") " << "-> " << mapping.second << ", ";
+}
+
+void HuffmanFrequencies::print_y_freq()
+{
+	print_freq_map(y);
+}
+
+void HuffmanFrequencies::print_cr_freq()
+{
+	print_freq_map(cr);
+}
+
+void HuffmanFrequencies::print_cb_freq()
+{
+	print_freq_map(cb);
+}
+
+HuffmanNode::HuffmanNode(std::pair<int, int> sym, int freq)
+{
+	symbol = sym;
+	frequency = freq;
+	left = nullptr;
+	right = nullptr;
+}
+
+int HuffmanNode::getFrequency() const
+{
+	return frequency;
+}
+
+std::pair<int, int> HuffmanNode::getSymbol() const
+{
+	return symbol;
+}
+
+void HuffmanNode::setLeftChildNode(HuffmanNode* L)
+{
+	left = L;
+}
+
+void HuffmanNode::setRightChildNode(HuffmanNode* R)
+{
+	right = R;
+}
+
+HuffmanNode* HuffmanNode::getLeftChildNode() const
+{
+	return left;
+}
+
+HuffmanNode* HuffmanNode::getRightChildNode() const
+{
+	return right;
+}
+
+HuffmanTrees::HuffmanTrees(HuffmanFrequencies& frequencies)
+{
+	rootY = buildTreeFromFrequencies(frequencies.y);
+	rootCr = buildTreeFromFrequencies(frequencies.cr);
+	rootCb = buildTreeFromFrequencies(frequencies.cb);
+	
+}
+
+HuffmanNode* HuffmanTrees::buildTreeFromFrequencies(const std::map<std::pair<int, int>, int>& freqMap)
+{
+	std::priority_queue<HuffmanNode*, std::vector<HuffmanNode*>, CompareNodes> pq;
+
+	for (const auto& pair : freqMap)
+	{
+		HuffmanNode* leafNode = new HuffmanNode(pair.first, pair.second);
+		pq.push(leafNode);
+	}
+	
+	while (pq.size() > 1)
+	{
+		// Extract two nodes with lowest frequencies
+		HuffmanNode* left = pq.top();
+		pq.pop();
+		HuffmanNode* right = pq.top();
+		pq.pop();
+
+		// Create a new node with combined frequency
+		HuffmanNode* newNode = new HuffmanNode(std::make_pair(-1, -1), left->getFrequency() + right->getFrequency());
+		newNode->left = left;
+		newNode->right = right;
+
+		// Insert the new node back into the priority queue
+		pq.push(newNode);
+	}
+
+	// The last remaining node in the priority queue is the root of the Huffman tree
+	HuffmanNode* root = pq.top();
+
+	// Clean up: Free memory for individual nodes that were allocated
+	while (!pq.empty())
+	{
+		delete pq.top();
+		pq.pop();
+	}
+
+	return root;
 }

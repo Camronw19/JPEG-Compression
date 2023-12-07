@@ -4,6 +4,7 @@
 #include "ppm.h"
 #include "YCbCr.h"
 #include <vector>
+#include <map>
 
 enum DCTMode
 {
@@ -42,6 +43,62 @@ public:
 	void print_cb();
 };
 
+struct HuffmanFrequencies
+{
+public: 
+	std::map<std::pair<int, int>, int> y;
+	std::map<std::pair<int, int>, int> cr;
+	std::map<std::pair<int, int>, int> cb;
+
+	HuffmanFrequencies() {}; 
+	void print_y_freq();
+	void print_cr_freq();
+	void print_cb_freq();
+};
+
+struct HuffmanNode
+{
+
+	int frequency; 
+	std::pair<int, int> symbol; 
+	HuffmanNode* left; 
+	HuffmanNode* right;
+
+public:
+
+	HuffmanNode(std::pair<int, int> sym, int freq);
+	
+	int getFrequency() const;
+	std::pair<int, int> getSymbol() const;
+	void setLeftChildNode(HuffmanNode* L);
+	void setRightChildNode(HuffmanNode* R);
+	HuffmanNode* getLeftChildNode() const;
+	HuffmanNode* getRightChildNode() const;
+};
+
+class HuffmanTrees
+{
+private:
+	
+	HuffmanNode* rootY;
+	HuffmanNode* rootCr;
+	HuffmanNode* rootCb;
+
+public:
+	
+	HuffmanTrees(HuffmanFrequencies& frequencies);
+
+	HuffmanNode* buildTreeFromFrequencies(const std::map<std::pair<int, int>, int>& freqMap);
+
+};
+
+struct CompareNodes
+{
+	bool operator()(const HuffmanNode* lhs, const HuffmanNode* rhs) const
+	{
+		return lhs->getFrequency() > rhs->getFrequency(); 
+	}
+};
 
 class JPEGCompressor
 {
@@ -51,6 +108,7 @@ private:
 	std::unique_ptr<YCbCrImage> ycbcr; 
 	DCTCoefficients dct_coefficients; 
 	RLE rle_data; 
+	HuffmanFrequencies huffman_frequencies; 
 
 	const std::array<std::array<int, 8>, 8> luminance_q_matrix = { {
 		{16, 11, 10, 16, 24, 40, 51, 61},
@@ -74,11 +132,15 @@ private:
    } };
 
 	// helper methods
-	std::array<std::array<int, 8>, 8> compute_dct_matrix(const std::array<std::array<unsigned char, 8>, 8>& input_matrix);
 	void rgb_to_ycbcr(const PPMImage& rgb_image);
+
 	void dct(DCTMode mode);
+	std::array<std::array<int, 8>, 8> compute_dct_matrix(const std::array<std::array<unsigned char, 8>, 8>& input_matrix);
+
 	std::vector<std::pair<int, int>> run_length_encoding(std::vector<std::vector<int>>& data);
 	std::vector<std::pair<int, int>> rle_block(const std::array<std::array<int, 8>, 8>& block);
+
+	void calculate_huffman_freq();
 
 public: 
 	JPEGCompressor();
